@@ -28,7 +28,7 @@ Syntax: one statement per line. \`$x = 8\` is state inputs bind to; \`name = exp
 Components (? optional; tone: neutral|good|warn|bad|info if meaningful; more in the next section):
 ${componentLines(REFERENCE_GROUPS)}
 Actions: ${actionList}; a list runs in order; Send posts as the user.
-Data: Load("path") reads JSON/CSV/TSV/JSONL from the workspace, "$BB_THREAD_STORAGE/x.json" or /tmp into lists and objects, and other files (a log, tsc output) as text; never retype values a file or command output holds. Snippet and Image read files the same way.
+Data: Load("path") reads JSON/CSV/TSV/JSONL from the workspace, "$BB_THREAD_STORAGE/x.json", /tmp or ~/dev/scratch into lists and objects, and other files (a log, tsc output) as text; never retype values a file or command output holds. Snippet and Image read files the same way.
 Games, simulations, custom visuals: write \`\`\`app, a self-contained HTML page (inline CSS/JS, CSS vars --foreground --muted-foreground --border --primary --card; sandboxed, no network).`;
 
 export const UI_REFERENCE_MORE = `# Inline UI reference, continued
@@ -49,6 +49,7 @@ Replies here are read in Paseo, which draws these components; pasted output, a m
 - outdated or vulnerable packages → Dependencies: \`npm outdated --json --long\`, \`npm audit --json\`, \`pip list --outdated --format=json\`
 - a CI run → Pipeline: \`gh run view <id> --json name,displayTitle,status,conclusion,event,headBranch,headSha,url,createdAt,updatedAt,jobs\`
 - timings you measured (before/after, A vs B) → Benchmark([{name, before, after, unit}]) or Load(\`hyperfine --export-json\`); a page load → Waterfall(Load(a HAR)); what takes space → Treemap(Load(\`du -k -d 2 <dir>\` or an esbuild metafile))
+- text the user must approve before it is posted (PR comments, replies, messages) → Draft(markdown, title), never Code(…, "markdown")
 - an API response → Json(Load(…)) from \`curl -s -o\`
 - what you changed → Changes(); a commit → Changes(sha); this branch's commits → Commits(); the pull request → PullRequest(); subthreads → Threads()
 - tasks or issues → Board(Load(…)) from \`gh issue list --json number,title,state,labels,assignees,url,updatedAt\`

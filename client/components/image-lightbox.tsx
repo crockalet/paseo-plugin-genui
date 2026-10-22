@@ -59,7 +59,7 @@ export function ImageLightbox({
             {natural !== null ? `   ${natural.width} × ${natural.height}` : ""}
           </Text>
           {natural !== null ? <Text style={styles.percent}>{Math.round(scale * 100)}%</Text> : null}
-          <Pressable accessibilityRole="button" accessibilityLabel="Close" hitSlop={12} onPress={onClose} style={styles.close}>
+          <Pressable accessibilityRole="button" accessibilityLabel="Close" hitSlop={16} onPress={onClose} style={styles.close}>
             <Text style={styles.closeText}>✕</Text>
           </Pressable>
         </View>
@@ -70,6 +70,12 @@ export function ImageLightbox({
           maximumZoomScale={4}
           centerContent
         >
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Close"
+            onPress={onClose}
+            style={{ minHeight: stageHeight, minWidth: stageWidth }}
+          >
           <ScrollView
             contentContainerStyle={{ minHeight: stageHeight, justifyContent: "center", alignItems: "center" }}
             scrollEnabled={actual}
@@ -88,6 +94,7 @@ export function ImageLightbox({
               )}
             </Pressable>
           </ScrollView>
+          </Pressable>
         </ScrollView>
         <Text style={styles.hint}>
           {zoomable ? (actual ? "Click to fit" : "Click to zoom") : ""}
@@ -103,8 +110,8 @@ const styles = StyleSheet.create({
   header: { flexDirection: "row", alignItems: "center", gap: 12, paddingHorizontal: 16, paddingTop: 16, paddingBottom: 8 },
   title: { flex: 1, color: "#f4f4f5", fontSize: 13, fontWeight: "600" },
   percent: { color: "#a1a1aa", fontSize: 12 },
-  close: { padding: 6 },
-  closeText: { color: "#f4f4f5", fontSize: 16 },
+  close: { paddingHorizontal: 14, paddingVertical: 8 },
+  closeText: { color: "#f4f4f5", fontSize: 24 },
   stage: { flex: 1 },
   hint: { color: "#a1a1aa", fontSize: 12, textAlign: "center", paddingVertical: 8 },
 });

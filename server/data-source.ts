@@ -49,7 +49,8 @@ type FileContent =
 
 type FileReader = (requested: string, maxBytes: number) => Promise<FileContent>;
 
-const AGENT_REFUSAL = "only files in this agent's workspace, its thread storage or /tmp can be loaded";
+const AGENT_REFUSAL =
+  "only files in this agent's workspace, its thread storage, /tmp or ~/dev/scratch can be loaded; copy the file to $BB_THREAD_STORAGE to show it";
 const GALLERY_REFUSAL = "gallery specs can only load files in gallery/";
 
 function contains(root: string, target: string): boolean {
@@ -171,6 +172,39 @@ function tempAttempts(target: string): Attempt[] {
   ];
 }
 
+/** Which roots may serve `requested`; empty means refuse. `~/` means the daemon user's home. */
+export function agentAttempts(
+  requested: string,
+  storageRoot: string,
+  workspaceCwd: string | null,
+  home: string,
+): Attempt[] {
+  const inside = (root: string | null, target: string): Attempt[] =>
+    root !== null && contains(root, target) ? [{ root, target }] : [];
+  const scratchRoot = path.join(home, "dev", "scratch");
+
+  if (requested.startsWith(BB_STORAGE_PREFIX)) {
+    return inside(storageRoot, path.resolve(storageRoot, requested.slice(BB_STORAGE_PREFIX.length)));
+  }
+  if (requested.startsWith(PASEO_STORAGE_PREFIX)) {
+    return inside(storageRoot, path.resolve(storageRoot, requested.slice(PASEO_STORAGE_PREFIX.length)));
+  }
+  if (requested.startsWith("~/")) {
+    return inside(scratchRoot, path.resolve(home, requested.slice(2)));
+  }
+  if (path.isAbsolute(requested)) {
+    const target = path.resolve(requested);
+    const own = [...inside(storageRoot, target), ...inside(workspaceCwd, target)].slice(0, 1);
+    if (own.length > 0) return own;
+    const scratch = inside(scratchRoot, target);
+    return scratch.length > 0 ? scratch : tempAttempts(target);
+  }
+  return [
+    ...inside(workspaceCwd, workspaceCwd !== null ? path.resolve(workspaceCwd, requested) : ""),
+    ...inside(storageRoot, path.resolve(storageRoot, requested)),
+  ];
+}
+
 async function readAgentFile(
   paseo: PaseoApi,
   agentId: string,
@@ -181,26 +215,7 @@ async function readAgentFile(
   await mkdir(storageRoot, { recursive: true }).catch(() => undefined);
   const workspaceCwd = await resolveAgentCwd(paseo, agentId);
 
-  const inside = (root: string | null, target: string): Attempt[] =>
-    root !== null && contains(root, target) ? [{ root, target }] : [];
-
-  let attempts: Attempt[];
-  if (requested.startsWith(BB_STORAGE_PREFIX)) {
-    const rel = requested.slice(BB_STORAGE_PREFIX.length);
-    attempts = inside(storageRoot, path.resolve(storageRoot, rel));
-  } else if (requested.startsWith(PASEO_STORAGE_PREFIX)) {
-    const rel = requested.slice(PASEO_STORAGE_PREFIX.length);
-    attempts = inside(storageRoot, path.resolve(storageRoot, rel));
-  } else if (path.isAbsolute(requested)) {
-    const target = path.resolve(requested);
-    attempts = [...inside(storageRoot, target), ...inside(workspaceCwd, target)].slice(0, 1);
-    if (attempts.length === 0) attempts = tempAttempts(target);
-  } else {
-    attempts = [
-      ...inside(workspaceCwd, workspaceCwd !== null ? path.resolve(workspaceCwd, requested) : ""),
-      ...inside(storageRoot, path.resolve(storageRoot, requested)),
-    ];
-  }
+  const attempts = agentAttempts(requested, storageRoot, workspaceCwd, os.homedir());
 
   if (attempts.length === 0) {
     return { ok: false, error: AGENT_REFUSAL };
