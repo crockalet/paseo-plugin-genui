@@ -152,11 +152,6 @@ export function Gallery({ props }: { props: Props }) {
               ) : item.src ? (
                 <LoadedImageView src={item.src} alt={item.caption} height={150} zoomable={false} />
               ) : null}
-              {item.caption ? (
-                <Text style={{ color: theme.colors.foregroundMuted, fontSize: 11.5 }}>
-                  {item.caption}
-                </Text>
-              ) : null}
             </Pressable>
           ))}
         </View>
